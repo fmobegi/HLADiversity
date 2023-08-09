@@ -1,17 +1,89 @@
+#load libraries
+if(!require(pacman)) install.packages("pacman")
+pacman::p_load(stringr, plyr, RColorBrewer, vroom, janitor, patchwork, tidyverse, devtools, ggpubr, ggpmisc, purrr, data.table)
+
 # Define a function to calculate allele frequencies for the sample data
 calculate_HLA_frequency <- function(hped) {
-
-  #load libraries
-  if(!require(pacman)) install.packages("pacman")
-  pacman::p_load(stringr, plyr, RColorBrewer, vroom, janitor,
-    patchwork, tidyverse, devtools, ggpubr, ggpmisc, purrr, data.table)
-
   hped %>% drop_na()
 
-  #read in data
-  file <- data.frame(hped[17], A=unlist(hped[1:2]), B=unlist(hped[3:4]), C=unlist(hped[5:6]),
-                     DQA1=unlist(hped[7:8]), DQB1=unlist(hped[9:10]), DRB1=unlist(hped[11:12]),
-                     DPA1=unlist(hped[13:14]), DPB1=unlist(hped[15:16]))
+  # Check if DRB3, DRB4, and DRB5 columns are present
+  has_drb3 <- "DRB3.1" %in% colnames(hped) && "DRB3.2" %in% colnames(hped)
+  has_drb4 <- "DRB4.1" %in% colnames(hped) && "DRB4.2" %in% colnames(hped)
+  has_drb5 <- "DRB5.1" %in% colnames(hped) && "DRB5.2" %in% colnames(hped)
+
+  tryCatch({
+    if (has_drb3 && has_drb4 && has_drb5) {
+      # Columns DRB3, DRB4, and DRB5 are present
+      allele_columns <- c(
+        "A.1", "A.2",
+        "B.1", "B.2",
+        "C.1", "C.2",
+        "DQA1.1", "DQA1.2",
+        "DQB1.1", "DQB1.2",
+        "DRB1.1", "DRB1.2",
+        "DPA1.1", "DPA1.2",
+        "DPB1.1", "DPB1.2",
+        "DRB3.1", "DRB3.2",
+        "DRB4.1", "DRB4.2",
+        "DRB5.1", "DRB5.2"
+      )
+      hped <- hped[c(allele_columns, "Population")]
+
+      # Read in data
+      file <- data.frame(
+        hped[23],
+        A = unlist(hped[1:2]),
+        B = unlist(hped[3:4]),
+        C = unlist(hped[5:6]),
+        DQA1 = unlist(hped[7:8]),
+        DQB1 = unlist(hped[9:10]),
+        DRB1 = unlist(hped[11:12]),
+        DPA1 = unlist(hped[13:14]),
+        DPB1 = unlist(hped[15:16]),
+        DRB3 = unlist(hped[17:18]),
+        DRB4 = unlist(hped[19:20]),
+        DRB5 = unlist(hped[21:22])
+      )
+
+      cat('Allele frequencies will be calulated for the following genes: \n',
+                paste(names(file[,2:ncol(file)]), sep = ", "))
+
+    }
+
+    else {
+      # Columns DRB3, DRB4, and DRB5 are not present
+      allele_columns <- c(
+        "A.1", "A.2",
+        "B.1", "B.2",
+        "C.1", "C.2",
+        "DQA1.1", "DQA1.2",
+        "DQB1.1", "DQB1.2",
+        "DRB1.1", "DRB1.2",
+        "DPA1.1", "DPA1.2",
+        "DPB1.1", "DPB1.2"
+      )
+      hped <- hped[c(allele_columns, "Population")]
+
+      # Read in data
+      file <- data.frame(
+        hped[17],
+        A = unlist(hped[1:2]),
+        B = unlist(hped[3:4]),
+        C = unlist(hped[5:6]),
+        DQA1 = unlist(hped[7:8]),
+        DQB1 = unlist(hped[9:10]),
+        DRB1 = unlist(hped[11:12]),
+        DPA1 = unlist(hped[13:14]),
+        DPB1 = unlist(hped[15:16])
+      )
+
+      cat('Allele frequencies will be calulated for the following genes: \n',
+          paste(names(file[,2:ncol(file)]), sep = ", "))
+    }
+  }, error = function(e) {
+    message("Error: Please check the input data for expected genes and try again!!")
+    stop()
+  })
 
   hla_types <- names(file)
 
@@ -23,8 +95,11 @@ calculate_HLA_frequency <- function(hped) {
   hla_drb1 <- file[7] %>% drop_na()
   hla_dpa1 <- file[8] %>% drop_na()
   hla_dpb1 <- file[9] %>% drop_na()
+  hla_drb3 <- if (has_drb3 && has_drb4 && has_drb5) file[10] %>% drop_na() else NULL
+  hla_drb4 <- if (has_drb3 && has_drb4 && has_drb5) file[11] %>% drop_na() else NULL
+  hla_drb5 <- if (has_drb3 && has_drb4 && has_drb5) file[12] %>% drop_na() else NULL
 
-  all_hla <- c(hla_a, hla_b, hla_c, hla_dpa1, hla_dpb1, hla_dqa1, hla_dqb1, hla_drb1)
+  all_hla <- c(hla_a, hla_b, hla_c, hla_dpa1, hla_dpb1, hla_dqa1, hla_dqb1, hla_drb1, hla_drb3, hla_drb4, hla_drb5)
 
   total.hla.alleles <- nrow(hla_a)
   total.hla.alleles
@@ -34,7 +109,7 @@ calculate_HLA_frequency <- function(hped) {
     hla <- all_hla[[hla_type]]
 
     # calculate allele frequency for allele 1
-    for( allele in unique(hla) ) {
+    for (allele in unique(hla) ) {
       #pull allele from hla_a_collapsed
       alleles <- hla[hla == allele]
       allele.freq <- (length(alleles)/total.hla.alleles)
@@ -44,10 +119,11 @@ calculate_HLA_frequency <- function(hped) {
     }
   }
 
-  df.allele
+  return(df.allele)
 }
 
 # -------------------------------------------------------------------------
+
 #Plot allele frequency
 
 Plot_HLA_allele_frequency <- function(hped, minFreq = 0.05) {
@@ -144,12 +220,7 @@ Plot_HLA_target_vs_ref <- function(tgt_hped, ref_hped){
 #Plot the diversity of HLA alleles
 plot_HLA_Diversity <-  function(hped, gene = "A", ntop = 2){
 
-  #load libraries
-  if(!require(pacman)) install.packages("pacman")
-  pacman::p_load(stringr, plyr, RColorBrewer, vroom, janitor,
-                 patchwork, tidyverse, devtools, ggpubr, ggpmisc, purrr, data.table)
-
-  #calculate frequency
+   #calculate frequency
   df_formatted <- hped %>%
     pivot_longer(cols = starts_with(c("A", "B", "C","DQA1","DQB1",
                                       "DRB1","DPA1","DPB1")),
