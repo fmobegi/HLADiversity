@@ -1,8 +1,9 @@
-#load libraries
-if(!require(pacman)) install.packages("pacman")
+# Define a function to calculate allele frequencies for the sample data
+  #load libraries
+if (!require(pacman)) install.packages("pacman")
+
 pacman::p_load(stringr, plyr, RColorBrewer, vroom, janitor, patchwork, tidyverse, devtools, ggpubr, ggpmisc, purrr, data.table)
 
-# Define a function to calculate allele frequencies for the sample data
 calculate_HLA_frequency <- function(hped) {
   hped %>% drop_na()
 
@@ -81,9 +82,10 @@ calculate_HLA_frequency <- function(hped) {
           paste(names(file[,2:ncol(file)]), sep = ", "))
     }
   }, error = function(e) {
-    message("Error: Please check the input data for expected genes and try again!!")
+    message("Error: Please check the input dataframe and try again.")
     stop()
   })
+
 
   hla_types <- names(file)
 
@@ -123,16 +125,15 @@ calculate_HLA_frequency <- function(hped) {
 }
 
 # -------------------------------------------------------------------------
-
 #Plot allele frequency
 
-Plot_HLA_allele_frequency <- function(hped, minFreq = 0.05) {
+Plot_HLA_allele_frequency <- function(hped, minFreq  =  0.05) {
 
   freq_file <- calculate_HLA_frequency(hped)
 
   freq_file.split <- as_tibble(freq_file) %>%
-    separate(col = allele, into = c("target_allele", NA), sep = "[*]", remove = F) %>%
-    filter(target_allele != 0)
+    separate(col  =  allele, into  =  c("target_allele", NA), sep  =  "[*]", remove  =  F) %>%
+    filter(target_allele !=  0)
   freq_file.split <<- freq_file.split
 
   freq_file.split$Label <- if_else(freq_file.split$freq > minFreq, freq_file.split$allele, "others")
@@ -143,13 +144,15 @@ Plot_HLA_allele_frequency <- function(hped, minFreq = 0.05) {
 
   plot <- freq_file.split %>%
     group_by(target_allele, Label) %>%
-    dplyr::summarise(freq2 = sum(freq)) %>%
-    ggplot( aes(y=freq2, x=target_allele, fill=Label)) +
-    geom_bar(stat='identity', show.legend = FALSE) + theme(legend.position = "none")+
-    geom_text(aes(label = Label), position = position_stack(0.5), size = 2.5)+
-    theme_classic()+
+    dplyr::summarise(freq2  =  sum(freq)) %>%
+    ggplot( aes(y = freq2, x = target_allele, fill = Label)) +
+    geom_bar(stat = 'identity', show.legend  =  FALSE) +
+    theme(legend.position  =  "none") +
+    geom_text(aes(label  =  Label), position  =  position_stack(0.5), size  =  2.5) +
+    theme_classic() +
     xlab("HLA Alleles") +
-    ylab("Allele Frequency")+ scale_fill_manual(values = custom_colors3)
+    ylab("Allele Frequency") +
+    scale_fill_manual(values  =  custom_colors3)
 
   plot
 }
@@ -161,31 +164,32 @@ Plot_HLA_allele_count <- function(hped) {
   freq_file <- calculate_HLA_frequency(hped)
 
   freq_file.split <- as_tibble(freq_file) %>%
-    separate(col = allele, into = c("target_allele", NA), sep = "[*]", remove = F) %>%
-    filter(allele != 0)
+    separate(col  =  allele, into  =  c("target_allele", NA), sep  =  "[*]", remove  =  F) %>%
+    filter(allele !=  0)
   freq_file.split <<- freq_file.split
 
   alleles <- unique(freq_file.split$target_allele)
   count_plot <- c()
 
-  for( allele in alleles ) {
-    df2 <- freq_file.split[freq_file.split$target_allele == allele,]
+  for (allele in alleles) {
+    df2 <- freq_file.split[freq_file.split$target_allele  ==  allele,]
     count_plot[allele] <- nrow(df2)
   }
 
-  df2.count<- as.data.frame(count_plot) %>% add_column(Allele = c("A", "B", "C", "DQA1", "DQB1", "DRB1", "DPA1", "DPB1"))
-  colnames(df2.count) <-c("Allele_Count", "Allele")
+  df2.count <- as.data.frame(count_plot) %>%
+    add_column(Allele  =  c("A", "B", "C", "DQA1", "DQB1", "DRB1", "DPA1", "DPB1"))
+  colnames(df2.count) <- c("Allele_Count", "Allele")
 
   df2.count <<- df2.count
   custom_colors1 <- colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(8)
   count_plot <- df2.count %>%
-    ggplot( aes(y=Allele_Count, x=Allele, fill=Allele)) +  theme_classic()+
-    geom_bar(stat='identity') + theme(legend.position = "none",
-                                      axis.text.x = element_text(size = 16),
-                                      axis.text.y = element_text(size = 16),
-                                      axis.title.x = element_text(size = 18),
-                                      axis.title.y = element_text(size = 18))+
-    scale_fill_manual(values = custom_colors1)
+    ggplot( aes(y = Allele_Count, x = Allele, fill = Allele)) +  theme_classic() +
+    geom_bar(stat = 'identity') + theme(legend.position  =  "none",
+                                      axis.text.x  =  element_text(size  =  16),
+                                      axis.text.y  =  element_text(size  =  16),
+                                      axis.title.x  =  element_text(size  =  18),
+                                      axis.title.y  =  element_text(size  =  18)) +
+    scale_fill_manual(values  =  custom_colors1)
 
   count_plot
 }
@@ -200,55 +204,55 @@ Plot_HLA_target_vs_ref <- function(tgt_hped, ref_hped){
   ref <- ref_file %>% arrange(allele)
   tgt <- tgt_file %>% arrange(allele)
 
-  ref_vs_target <- tgt %>% inner_join(ref, by = "allele", suffix = c(".target", "ref"))
+  ref_vs_target <- tgt %>% inner_join(ref, by  =  "allele", suffix  =  c(".target", "ref"))
 
   plot <- ref_vs_target %>%
-    ggplot(aes(x = freqref, y = freq.target )) +
+    ggplot(aes(x  =  freqref, y  =  freq.target )) +
     geom_point() +
     scale_y_log10() +
-    scale_x_log10()+
-    theme_classic()+
-    geom_point()+
-    geom_smooth(method=lm, se=FALSE)+
+    scale_x_log10() +
+    theme_classic() +
+    geom_point() +
+    geom_smooth(method = lm, se = FALSE) +
     xlab("reference data") +
-    ylab("target data")+
+    ylab("target data") +
     stat_poly_eq()
   plot
 }
 
 # -------------------------------------------------------------------------
 #Plot the diversity of HLA alleles
-plot_HLA_Diversity <-  function(hped, gene = "A", ntop = 2){
+plot_HLA_Diversity <-  function(hped, gene  =  "A", ntop  =  2){
 
-   #calculate frequency
+  #calculate frequency
   df_formatted <- hped %>%
-    pivot_longer(cols = starts_with(c("A", "B", "C","DQA1","DQB1",
+    pivot_longer(cols  =  starts_with(c("A", "B", "C","DQA1","DQB1",
                                       "DRB1","DPA1","DPB1")),
-                 names_to = "Column", values_to = "alleles") %>%
-    separate(Column, into = c("category", "haplotype"), sep = "\\.") %>%
-    dplyr::rename(population = Population)
+                 names_to  =  "Column", values_to  =  "alleles") %>%
+    separate(Column, into  =  c("category", "haplotype"), sep  =  "\\.") %>%
+    dplyr::rename(population  =  Population)
 
   pop_count <- df_formatted %>%
     group_by(population,category) %>%
-    summarize(total_alleles = n())
+    summarize(total_alleles  =  n())
 
   allele_count <- df_formatted %>%
     filter(!is.na(alleles)) %>%
     group_by(population, alleles) %>%
-    summarize(allele_count = n()) %>%
-    mutate(tmp_allele = alleles) %>%
-    separate(tmp_allele, into = c("category", "spec"), sep = "\\*") %>%
+    summarize(allele_count  =  n()) %>%
+    mutate(tmp_allele  =  alleles) %>%
+    separate(tmp_allele, into  =  c("category", "spec"), sep  =  "\\*") %>%
     select(-spec)
 
-  final = allele_count %>%
-    inner_join(pop_count, by = c("population", "category")) %>%
+  final  =  allele_count %>%
+    inner_join(pop_count, by  =  c("population", "category")) %>%
     group_by(population, alleles) %>%
-    summarise(allele_freq = allele_count/total_alleles,
-              allele_count = allele_count)
+    summarise(allele_freq  =  allele_count/total_alleles,
+              allele_count  =  allele_count)
 
   tgt_al_freq  <- as_tibble(final) %>%
-    separate(col = alleles, into = c("HLA_gene", NA), sep = "[*]", remove = F) %>%
-    filter(HLA_gene == gene )
+    separate(col  =  alleles, into  =  c("HLA_gene", NA), sep  =  "[*]", remove  =  F) %>%
+    filter(HLA_gene  ==  gene )
   tgt_al_freq  <<- tgt_al_freq
 
   #sort and rank
@@ -256,7 +260,7 @@ plot_HLA_Diversity <-  function(hped, gene = "A", ntop = 2){
     group_by(population) %>%
     arrange(population, -allele_freq) %>%
     dplyr::mutate(
-      Serial = row_number()
+      Serial  =  row_number()
     ) %>%
     filter(Serial %in% c(1:ntop))
 
@@ -269,17 +273,17 @@ plot_HLA_Diversity <-  function(hped, gene = "A", ntop = 2){
   #plot
   tgt_al_freq %>%
     mutate(
-      Label=if_else(alleles %in%  unic & allele_freq > 0.05, alleles, "others")) %>%
-    group_by(population, Label) %>% dplyr::summarise(freq2 = sum(allele_freq)) %>%
-    ggplot( aes(y=freq2, x=population, fill=Label)) +
-    geom_bar(stat = "identity", show.legend = FALSE) +
-    geom_text(aes(y = freq2,label = Label),
-              position = position_stack(0.5),
-              size = 4.5)+
-    theme(legend.position = "none")+
-    theme_classic()+
-    labs(x = "Population", y = "Allele Frequency") +
-    theme(axis.text.x = element_text(size = 16), axis.text.y = element_text(size = 16),
-          axis.title.x = element_text(size = 18), axis.title.y = element_text(size = 18)) +
-    scale_fill_manual(values = custom_colors5)
+      Label = if_else(alleles %in%  unic & allele_freq > 0.05, alleles, "others")) %>%
+    group_by(population, Label) %>% dplyr::summarise(freq2  =  sum(allele_freq)) %>%
+    ggplot( aes(y = freq2, x = population, fill = Label)) +
+    geom_bar(stat  =  "identity", show.legend  =  FALSE) +
+    geom_text(aes(y  =  freq2,label  =  Label),
+              position  =  position_stack(0.5),
+              size  =  4.5) +
+    theme(legend.position  =  "none") +
+    theme_classic() +
+    labs(x  =  "Population", y  =  "Allele Frequency") +
+    theme(axis.text.x  =  element_text(size  =  16), axis.text.y  =  element_text(size  =  16),
+          axis.title.x  =  element_text(size  =  18), axis.title.y  =  element_text(size  =  18)) +
+    scale_fill_manual(values  =  custom_colors5)
 }

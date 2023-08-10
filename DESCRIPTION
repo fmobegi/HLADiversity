@@ -15,7 +15,6 @@ Depends:
 URL: https://github.com/nanjalaruth/HLADiversity
 BugReports: https://github.com/nanjalaruth/HLADiversity/issues
 Imports:
-    pacman,
     stringr,
     plyr,
     RColorBrewer,
@@ -28,3 +27,4 @@ Imports:
     ggpmisc,
     purrr,
     data.table
+RoxygenNote: 7.2.3
