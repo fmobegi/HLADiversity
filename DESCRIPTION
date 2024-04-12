@@ -1,7 +1,7 @@
 Package: HLADiversity
 Type: Package
 Title: This package computes and plots the diversity of HLA alleles
-Version: 0.1.0
+Version: 0.2.0
 Author: Ruth Nanjala
 Maintainer: The package maintainer <rnanjeee@gmail.com>
 Description: The package takes in a HPED file, 
@@ -14,17 +14,12 @@ Depends:
     R (>= 4.3.1)
 Imports:
     stringr (>= 1.5.0),
-    plyr (>= 1.8.8),
     RColorBrewer (>= 1.1-3),
-    vroom (>= 1.6.3),
     janitor (>= 2.2.0),
     patchwork (>= 1.1.2),
-    tidyverse (>= 2.0.0),
     devtools (>= 2.4.5),
     ggpubr (>= 0.6.0),
     ggpmisc (>= 0.5.2),
-    purrr (>= 1.0.1),
-    data.table (>= 1.14.8),
     tidyr,
     dplyr,
     ggplot2,

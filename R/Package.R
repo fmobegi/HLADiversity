@@ -236,7 +236,7 @@ plot_HLA_Diversity <-  function(hped, gene  =  "A", ntop  =  2){
     filter(!is.na(alleles)) %>%
     group_by(population, alleles) %>%
     summarize(allele_count  =  n()) %>%
-    mutate(tmp_allele  =  alleles) %>%
+    dplyr::mutate(tmp_allele  =  alleles) %>%
     separate(tmp_allele, into  =  c("category", "spec"), sep  =  "\\*") %>%
     select(-spec)
 
@@ -268,7 +268,7 @@ plot_HLA_Diversity <-  function(hped, gene  =  "A", ntop  =  2){
 
   #plot
   tgt_al_freq %>%
-    mutate(
+    dplyr::mutate(
       Label = if_else(alleles %in%  unic & allele_freq > 0.05, alleles, "others")) %>%
     group_by(population, Label) %>% dplyr::summarise(freq2  =  sum(allele_freq)) %>%
     ggplot( aes(y = freq2, x = population, fill = Label)) +
