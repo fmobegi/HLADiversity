@@ -37,7 +37,7 @@ You can install the development version of HLADiversity from
 [GitHub](https://github.com) with:
 
 ``` r
-devtools::install_github("yang-luo-lab/HLADiversity")
+devtools::install_github("fmobegi/HLADiversity")
 ```
 
 ## Running the functions
